@@ -10,12 +10,14 @@ const analystAgent = loadAgent("analyst.agent.yaml");
 const architectAgent = loadAgent("architect.agent.yaml");
 const devAgent = loadAgent("dev.agent.yaml");
 const pmAgent = loadAgent("pm.agent.yaml");
+const qaAgent = loadAgent("qa.agent.yaml");
 
 console.log("Agents Loaded:");
 console.log("1 -", analystAgent.agent.metadata.name);
 console.log("2 -", architectAgent.agent.metadata.name);
 console.log("3 -", devAgent.agent.metadata.name);
 console.log("4 -", pmAgent.agent.metadata.name);
+console.log("5 -", qaAgent.agent.metadata.name);
 
 // ✅ Create OpenRouter client
 const client = new OpenAI({
@@ -39,13 +41,26 @@ function buildSystemPrompt(agent) {
     prompt += agent.agent.persona.communication_style + "\n\n";
 
   if (agent.agent.persona.principles)
-    prompt += agent.agent.persona.principles + "\n\n";
+    prompt += Array.isArray(agent.agent.persona.principles)
+      ? agent.agent.persona.principles.join("\n")
+      : agent.agent.persona.principles;
+
+  prompt += "\n\n";
 
   if (agent.agent.critical_actions) {
     prompt += "Critical Actions:\n";
     agent.agent.critical_actions.forEach((action) => {
       prompt += "- " + action + "\n";
     });
+    prompt += "\n";
+  }
+
+  // If agent has welcome prompt (like QA)
+  if (agent.agent.prompts) {
+    const welcome = agent.agent.prompts.find(p => p.id === "welcome");
+    if (welcome) {
+      prompt += welcome.content + "\n";
+    }
   }
 
   return prompt.trim();
@@ -61,13 +76,13 @@ async function run() {
   console.log("\nBMAD Multi-Agent System Started.");
   console.log("Type 'exit' anytime to stop.\n");
 
-  // ✅ Agent Selection
   const choice = await askUser(
     "Choose agent:\n" +
     "1 = Analyst Mary 📊\n" +
     "2 = Architect Winston 🏗️\n" +
     "3 = Developer Amelia 💻\n" +
-    "4 = Product Manager John 📋\n\n" +
+    "4 = Product Manager John 📋\n" +
+    "5 = QA Engineer Quinn 🧪\n\n" +
     "Selection: "
   );
 
@@ -89,12 +104,16 @@ async function run() {
       console.log("\n📋 Product Manager John Activated.\n");
       break;
 
+    case "5":
+      selectedAgent = qaAgent;
+      console.log("\n🧪 QA Engineer Quinn Activated.\n");
+      break;
+
     default:
       selectedAgent = analystAgent;
       console.log("\n📊 Analyst Mary Activated.\n");
   }
 
-  // ✅ Initialize conversation with selected agent persona
   const messages = [
     {
       role: "system",
@@ -102,7 +121,6 @@ async function run() {
     },
   ];
 
-  // ✅ Chat Loop
   while (true) {
     const userInput = await askUser();
 
