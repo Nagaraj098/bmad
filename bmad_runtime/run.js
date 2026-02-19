@@ -11,6 +11,7 @@ const architectAgent = loadAgent("architect.agent.yaml");
 const devAgent = loadAgent("dev.agent.yaml");
 const pmAgent = loadAgent("pm.agent.yaml");
 const qaAgent = loadAgent("qa.agent.yaml");
+const quickFlowAgent = loadAgent("quick-flow-solo-dev.agent.yaml");
 
 console.log("Agents Loaded:");
 console.log("1 -", analystAgent.agent.metadata.name);
@@ -18,6 +19,7 @@ console.log("2 -", architectAgent.agent.metadata.name);
 console.log("3 -", devAgent.agent.metadata.name);
 console.log("4 -", pmAgent.agent.metadata.name);
 console.log("5 -", qaAgent.agent.metadata.name);
+console.log("6 -", quickFlowAgent.agent.metadata.name);
 
 // ✅ Create OpenRouter client
 const client = new OpenAI({
@@ -55,7 +57,6 @@ function buildSystemPrompt(agent) {
     prompt += "\n";
   }
 
-  // If agent has welcome prompt (like QA)
   if (agent.agent.prompts) {
     const welcome = agent.agent.prompts.find(p => p.id === "welcome");
     if (welcome) {
@@ -82,7 +83,8 @@ async function run() {
     "2 = Architect Winston 🏗️\n" +
     "3 = Developer Amelia 💻\n" +
     "4 = Product Manager John 📋\n" +
-    "5 = QA Engineer Quinn 🧪\n\n" +
+    "5 = QA Engineer Quinn 🧪\n" +
+    "6 = Quick Flow Solo Dev Barry 🚀\n\n" +
     "Selection: "
   );
 
@@ -107,6 +109,11 @@ async function run() {
     case "5":
       selectedAgent = qaAgent;
       console.log("\n🧪 QA Engineer Quinn Activated.\n");
+      break;
+
+    case "6":
+      selectedAgent = quickFlowAgent;
+      console.log("\n🚀 Quick Flow Solo Dev Barry Activated.\n");
       break;
 
     default:
