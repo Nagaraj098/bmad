@@ -5,11 +5,13 @@ import { loadAgent } from "./agentLoader.js";
 
 dotenv.config();
 
-// ✅ Load Analyst agent from local agents folder
+// ✅ Load Agents
 const analystAgent = loadAgent("analyst.agent.yaml");
+const architectAgent = loadAgent("architect.agent.yaml");
 
-console.log("Analyst Agent Loaded:");
-console.log(analystAgent);
+console.log("Agents Loaded:");
+console.log("1 -", analystAgent.agent.metadata.name);
+console.log("2 -", architectAgent.agent.metadata.name);
 
 // ✅ Create OpenRouter client
 const client = new OpenAI({
@@ -22,29 +24,51 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
-// ✅ Use REAL analyst persona instead of hardcoded prompt
-const messages = [
-  {
-    role: "system",
-    content:
-      analystAgent.agent.persona.identity +
-      "\n\n" +
-      analystAgent.agent.persona.communication_style +
-      "\n\n" +
-      analystAgent.agent.persona.principles,
-  },
-];
+// ✅ Helper: Build system prompt dynamically
+function buildSystemPrompt(agent) {
+  return (
+    agent.agent.persona.identity +
+    "\n\n" +
+    agent.agent.persona.communication_style +
+    "\n\n" +
+    agent.agent.persona.principles
+  );
+}
 
-
-async function askUser() {
+async function askUser(question = "\nYou: ") {
   return new Promise((resolve) => {
-    rl.question("\nYou: ", resolve);
+    rl.question(question, resolve);
   });
 }
 
 async function run() {
-  console.log("BMAD Analyst Agent started. Type 'exit' to stop.\n");
+  console.log("\nBMAD Multi-Agent System Started.");
+  console.log("Type 'exit' anytime to stop.\n");
 
+  // ✅ Agent selection
+  const choice = await askUser(
+    "Choose agent (1 = Analyst Mary, 2 = Architect Winston): "
+  );
+
+  let selectedAgent;
+
+  if (choice === "2") {
+    selectedAgent = architectAgent;
+    console.log("\n🏗️ Architect Winston Activated.\n");
+  } else {
+    selectedAgent = analystAgent;
+    console.log("\n📊 Analyst Mary Activated.\n");
+  }
+
+  // ✅ Initialize message history with selected agent persona
+  const messages = [
+    {
+      role: "system",
+      content: buildSystemPrompt(selectedAgent),
+    },
+  ];
+
+  // ✅ Chat loop
   while (true) {
     const userInput = await askUser();
 
