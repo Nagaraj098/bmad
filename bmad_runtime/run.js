@@ -9,11 +9,13 @@ dotenv.config();
 const analystAgent = loadAgent("analyst.agent.yaml");
 const architectAgent = loadAgent("architect.agent.yaml");
 const devAgent = loadAgent("dev.agent.yaml");
+const pmAgent = loadAgent("pm.agent.yaml");
 
 console.log("Agents Loaded:");
 console.log("1 -", analystAgent.agent.metadata.name);
 console.log("2 -", architectAgent.agent.metadata.name);
 console.log("3 -", devAgent.agent.metadata.name);
+console.log("4 -", pmAgent.agent.metadata.name);
 
 // ✅ Create OpenRouter client
 const client = new OpenAI({
@@ -26,7 +28,7 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
-// ✅ Helper: Build system prompt dynamically
+// ✅ Build system prompt dynamically
 function buildSystemPrompt(agent) {
   let prompt = "";
 
@@ -39,7 +41,6 @@ function buildSystemPrompt(agent) {
   if (agent.agent.persona.principles)
     prompt += agent.agent.persona.principles + "\n\n";
 
-  // Include critical actions if present (Developer agent)
   if (agent.agent.critical_actions) {
     prompt += "Critical Actions:\n";
     agent.agent.critical_actions.forEach((action) => {
@@ -62,7 +63,12 @@ async function run() {
 
   // ✅ Agent Selection
   const choice = await askUser(
-    "Choose agent:\n1 = Analyst Mary 📊\n2 = Architect Winston 🏗️\n3 = Developer Amelia 💻\n\nSelection: "
+    "Choose agent:\n" +
+    "1 = Analyst Mary 📊\n" +
+    "2 = Architect Winston 🏗️\n" +
+    "3 = Developer Amelia 💻\n" +
+    "4 = Product Manager John 📋\n\n" +
+    "Selection: "
   );
 
   let selectedAgent;
@@ -78,12 +84,17 @@ async function run() {
       console.log("\n💻 Developer Amelia Activated.\n");
       break;
 
+    case "4":
+      selectedAgent = pmAgent;
+      console.log("\n📋 Product Manager John Activated.\n");
+      break;
+
     default:
       selectedAgent = analystAgent;
       console.log("\n📊 Analyst Mary Activated.\n");
   }
 
-  // ✅ Initialize conversation with selected persona
+  // ✅ Initialize conversation with selected agent persona
   const messages = [
     {
       role: "system",
