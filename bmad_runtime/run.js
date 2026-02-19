@@ -1,68 +1,49 @@
 import OpenAI from "openai";
 import dotenv from "dotenv";
 import readline from "readline";
-import fs from "fs";
+import { loadAgent } from "./agentLoader.js";
 
 dotenv.config();
 
+// ✅ Load Analyst agent from local agents folder
+const analystAgent = loadAgent("analyst.agent.yaml");
+
+console.log("Analyst Agent Loaded:");
+console.log(analystAgent);
+
+// ✅ Create OpenRouter client
 const client = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
   baseURL: "https://openrouter.ai/api/v1",
 });
-
-// 🔹 Load analyze.md as system prompt
-const analyzePrompt = fs.readFileSync(
-  "../_bmad/workflows/food-order-system/steps/analyze.md",
-  "utf-8"
-);
 
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
 });
 
-// const messages = [
-//   {
-//     role: "system",
-//     content: analyzePrompt
-//   }
-// ];
+// ✅ Use REAL analyst persona instead of hardcoded prompt
 const messages = [
   {
     role: "system",
-    content: `
-You are a BMAD multi‑domain analyst agent.
-
-Your job is to perform requirement elicitation for ANY system the user describes.
-
-Follow this process:
-
-1. Identify the domain automatically (e.g., e‑commerce, healthcare, booking, fintech, logistics, etc).
-2. Ask structured clarifying questions covering:
-   - Target users
-   - Business goals
-   - Core features
-   - Platform (web/mobile/API)
-   - Data requirements
-   - Integrations
-   - Constraints
-   - Scale expectations
-3. Continue asking until requirements are clear.
-4. Keep conversation interactive like a discovery interview.
-5. Do NOT assume details — always ask.
-`
-  }
+    content:
+      analystAgent.agent.persona.identity +
+      "\n\n" +
+      analystAgent.agent.persona.communication_style +
+      "\n\n" +
+      analystAgent.agent.persona.principles,
+  },
 ];
 
 
 async function askUser() {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     rl.question("\nYou: ", resolve);
   });
 }
 
 async function run() {
-  console.log("BMAD Agent started (using workflow). Type 'exit' to stop.\n");
+  console.log("BMAD Analyst Agent started. Type 'exit' to stop.\n");
 
   while (true) {
     const userInput = await askUser();
@@ -77,7 +58,7 @@ async function run() {
     try {
       const response = await client.chat.completions.create({
         model: "openai/gpt-4o-mini",
-        messages
+        messages,
       });
 
       const reply = response.choices[0].message.content;
@@ -85,7 +66,6 @@ async function run() {
       console.log("\nAgent:", reply);
 
       messages.push({ role: "assistant", content: reply });
-
     } catch (err) {
       console.error("Error:", err.message);
     }
