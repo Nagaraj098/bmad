@@ -12,6 +12,8 @@ const devAgent = loadAgent("dev.agent.yaml");
 const pmAgent = loadAgent("pm.agent.yaml");
 const qaAgent = loadAgent("qa.agent.yaml");
 const quickFlowAgent = loadAgent("quick-flow-solo-dev.agent.yaml");
+const scrumMasterAgent = loadAgent("sm.agent.yaml");
+const uxDesignerAgent = loadAgent("ux-designer.agent.yaml");
 
 console.log("Agents Loaded:");
 console.log("1 -", analystAgent.agent.metadata.name);
@@ -20,6 +22,8 @@ console.log("3 -", devAgent.agent.metadata.name);
 console.log("4 -", pmAgent.agent.metadata.name);
 console.log("5 -", qaAgent.agent.metadata.name);
 console.log("6 -", quickFlowAgent.agent.metadata.name);
+console.log("7 -", scrumMasterAgent.agent.metadata.name);
+console.log("8 -", uxDesignerAgent.agent.metadata.name);
 
 // ✅ Create OpenRouter client
 const client = new OpenAI({
@@ -84,7 +88,9 @@ async function run() {
     "3 = Developer Amelia 💻\n" +
     "4 = Product Manager John 📋\n" +
     "5 = QA Engineer Quinn 🧪\n" +
-    "6 = Quick Flow Solo Dev Barry 🚀\n\n" +
+    "6 = Quick Flow Solo Dev Barry 🚀\n" +
+    "7 = Scrum Master Bob 🏃\n" +
+    "8 = UX Designer Sally 🎨\n\n" +
     "Selection: "
   );
 
@@ -114,6 +120,16 @@ async function run() {
     case "6":
       selectedAgent = quickFlowAgent;
       console.log("\n🚀 Quick Flow Solo Dev Barry Activated.\n");
+      break;
+
+    case "7":
+      selectedAgent = scrumMasterAgent;
+      console.log("\n🏃 Scrum Master Bob Activated.\n");
+      break;
+
+    case "8":
+      selectedAgent = uxDesignerAgent;
+      console.log("\n🎨 UX Designer Sally Activated.\n");
       break;
 
     default:
