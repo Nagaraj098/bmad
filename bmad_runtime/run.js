@@ -5,13 +5,15 @@ import { loadAgent } from "./agentLoader.js";
 
 dotenv.config();
 
-// ✅ Load Agents
+// ✅ Load All Agents
 const analystAgent = loadAgent("analyst.agent.yaml");
 const architectAgent = loadAgent("architect.agent.yaml");
+const devAgent = loadAgent("dev.agent.yaml");
 
 console.log("Agents Loaded:");
 console.log("1 -", analystAgent.agent.metadata.name);
 console.log("2 -", architectAgent.agent.metadata.name);
+console.log("3 -", devAgent.agent.metadata.name);
 
 // ✅ Create OpenRouter client
 const client = new OpenAI({
@@ -26,13 +28,26 @@ const rl = readline.createInterface({
 
 // ✅ Helper: Build system prompt dynamically
 function buildSystemPrompt(agent) {
-  return (
-    agent.agent.persona.identity +
-    "\n\n" +
-    agent.agent.persona.communication_style +
-    "\n\n" +
-    agent.agent.persona.principles
-  );
+  let prompt = "";
+
+  if (agent.agent.persona.identity)
+    prompt += agent.agent.persona.identity + "\n\n";
+
+  if (agent.agent.persona.communication_style)
+    prompt += agent.agent.persona.communication_style + "\n\n";
+
+  if (agent.agent.persona.principles)
+    prompt += agent.agent.persona.principles + "\n\n";
+
+  // Include critical actions if present (Developer agent)
+  if (agent.agent.critical_actions) {
+    prompt += "Critical Actions:\n";
+    agent.agent.critical_actions.forEach((action) => {
+      prompt += "- " + action + "\n";
+    });
+  }
+
+  return prompt.trim();
 }
 
 async function askUser(question = "\nYou: ") {
@@ -45,22 +60,30 @@ async function run() {
   console.log("\nBMAD Multi-Agent System Started.");
   console.log("Type 'exit' anytime to stop.\n");
 
-  // ✅ Agent selection
+  // ✅ Agent Selection
   const choice = await askUser(
-    "Choose agent (1 = Analyst Mary, 2 = Architect Winston): "
+    "Choose agent:\n1 = Analyst Mary 📊\n2 = Architect Winston 🏗️\n3 = Developer Amelia 💻\n\nSelection: "
   );
 
   let selectedAgent;
 
-  if (choice === "2") {
-    selectedAgent = architectAgent;
-    console.log("\n🏗️ Architect Winston Activated.\n");
-  } else {
-    selectedAgent = analystAgent;
-    console.log("\n📊 Analyst Mary Activated.\n");
+  switch (choice) {
+    case "2":
+      selectedAgent = architectAgent;
+      console.log("\n🏗️ Architect Winston Activated.\n");
+      break;
+
+    case "3":
+      selectedAgent = devAgent;
+      console.log("\n💻 Developer Amelia Activated.\n");
+      break;
+
+    default:
+      selectedAgent = analystAgent;
+      console.log("\n📊 Analyst Mary Activated.\n");
   }
 
-  // ✅ Initialize message history with selected agent persona
+  // ✅ Initialize conversation with selected persona
   const messages = [
     {
       role: "system",
@@ -68,7 +91,7 @@ async function run() {
     },
   ];
 
-  // ✅ Chat loop
+  // ✅ Chat Loop
   while (true) {
     const userInput = await askUser();
 
@@ -90,6 +113,7 @@ async function run() {
       console.log("\nAgent:", reply);
 
       messages.push({ role: "assistant", content: reply });
+
     } catch (err) {
       console.error("Error:", err.message);
     }
