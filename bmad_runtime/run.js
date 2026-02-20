@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import dotenv from "dotenv";
 import readline from "readline";
 import { loadAgent } from "./agentLoader.js";
+import { exit } from "process";
 
 dotenv.config();
 
@@ -19,7 +20,10 @@ const agents = {
 
 console.log("Agents Loaded:");
 Object.entries(agents).forEach(([key, agent]) => {
-  console.log(`${key} - ${agent.agent.metadata.name}`);
+  const meta = agent.agent.metadata;
+  console.log(
+    `${key} = ${meta.title} ${meta.name} ${meta.icon || ""}`
+  );
 });
 
 // ✅ Create OpenRouter client
@@ -74,9 +78,12 @@ async function askUser(question = "\nYou: ") {
 
 async function chooseAgent() {
   console.log("\nChoose agent:");
-  Object.entries(agents).forEach(([key, agent]) => {
-    console.log(`${key} = ${agent.agent.metadata.name}`);
-  });
+ Object.entries(agents).forEach(([key, agent]) => {
+  const meta = agent.agent.metadata;
+  console.log(
+    `${key} = ${meta.title} ${meta.name} ${meta.icon || ""}`
+  );
+});
 
   const choice = await askUser("Selection: ");
   return agents[choice] || agents["1"]; // default to Analyst
